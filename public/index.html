@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karavan Kiralama Sözleşmesi</title>
+</head>
+<body>
+    <h1>Karavan Kiralama Sözleşmesi</h1>
+    <form id="contract-form">
+        <label for="name">Ad Soyad:</label>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="idNumber">TC Kimlik No:</label>
+        <input type="text" id="idNumber" name="idNumber" required><br><br>
+
+        <label for="address">Adres:</label>
+        <input type="text" id="address" name="address" required><br><br>
+
+        <label for="phone">Telefon:</label>
+        <input type="text" id="phone" name="phone" required><br><br>
+
+        <label for="signature">İmza:</label><br>
+        <canvas id="signature-pad" width="400" height="200" style="border:1px solid black;"></canvas><br><br>
+
+        <button type="submit">PDF Oluştur</button>
+    </form>
+
+    <script>
+        const canvas = document.getElementById('signature-pad');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+
+        canvas.addEventListener('mousedown', () => drawing = true);
+        canvas.addEventListener('mouseup', () => drawing = false);
+        canvas.addEventListener('mousemove', draw);
+
+        function draw(event) {
+            if (!drawing) return;
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'black';
+            ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+        }
+
+        document.getElementById('contract-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const dataURL = canvas.toDataURL();
+            const formData = {
+                name: document.getElementById('name').value,
+                idNumber: document.getElementById('idNumber').value,
+                address: document.getElementById('address').value,
+                phone: document.getElementById('phone').value,
+                signature: dataURL
+            };
+
+            const response = await fetch('/create-pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${formData.name}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        });
+    </script>
+</body>
+</html>
