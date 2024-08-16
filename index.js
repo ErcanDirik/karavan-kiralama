@@ -1,10 +1,16 @@
 const express = require('express');
+const path = require('path'); // path modülünü dahil ediyoruz
+const app = express();
+
 const PDFDocument = require('pdfkit');
 const bodyParser = require('body-parser');
 
-const app = express();
 app.use(bodyParser.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  });
+
 
 app.post('/create-pdf', (req, res) => {
     const { name, idNumber, address, phone, signature } = req.body;
